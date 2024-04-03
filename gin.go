@@ -89,12 +89,22 @@ const (
 type Engine struct {
 	RouterGroup
 
+	//RedirectTrailingSlash 激活自动重定向如果当前路由无法匹配但存在带（不带）尾部斜杠的路径的处理程序。
+	//例如，如果请求/foo/但仅存在/foo的路由，则对于GET请求，客户端将被重定向到带有http状态代码301的/foo,其他请求方法为307。
+
 	// RedirectTrailingSlash enables automatic redirection if the current route can't be matched but a
 	// handler for the path with (without) the trailing slash exists.
 	// For example if /foo/ is requested but a route only exists for /foo, the
 	// client is redirected to /foo with http status code 301 for GET requests
 	// and 307 for all other request methods.
 	RedirectTrailingSlash bool
+    
+	// RedirectFixedPath 如果启用，路由器将尝试修复当前请求路径，如果没有为其注册处理程序。
+	// 首先删除多余的路径元素，例如../或//。
+	// 然后，路由器对清理后的路径进行不区分大小写的查找。
+	// 如果可以找到此路由的处理程序，路由器将使用状态代码301对GET请求进行重定向到已更正的路径，对于所有其他请求方法，使用状态代码307。
+	// 例如，/FOO和/..//Foo可以重定向到/foo。
+	// RedirectTrailingSlash与此选项无关。
 
 	// RedirectFixedPath if enabled, the router tries to fix the current request path, if no
 	// handle is registered for it.
@@ -107,6 +117,10 @@ type Engine struct {
 	// RedirectTrailingSlash is independent of this option.
 	RedirectFixedPath bool
 
+    // HandleMethodNotAllowed 如果启用，路由器将检查当前路由是否允许另一种方法，如果无法路由当前请求。
+	// 如果是这种情况，请求将以“方法不允许”回答，并使用HTTP状态代码405。
+	// 如果不允许其他方法，则将请求委托给NotFound处理程序。
+
 	// HandleMethodNotAllowed if enabled, the router checks if another method is allowed for the
 	// current route, if the current request can not be routed.
 	// If this is the case, the request is answered with 'Method Not Allowed'
@@ -114,6 +128,9 @@ type Engine struct {
 	// If no other Method is allowed, the request is delegated to the NotFound
 	// handler.
 	HandleMethodNotAllowed bool
+    
+	// ForwardedByClientIP 如果启用，将从匹配`(*gin.Engine).RemoteIPHeaders`中存储的请求标头中解析客户端IP。
+	// 如果未获取到IP，则会回退到从`(*gin.Context).Request.RemoteAddr`获取的IP。
 
 	// ForwardedByClientIP if enabled, client IP will be parsed from the request's headers that
 	// match those stored at `(*gin.Engine).RemoteIPHeaders`. If no IP was
@@ -127,17 +144,28 @@ type Engine struct {
 	// 'X-AppEngine...' for better integration with that PaaS.
 	AppEngine bool
 
+	// UseRawPath 如果启用，将使用url.RawPath查找参数。
 	// UseRawPath if enabled, the url.RawPath will be used to find parameters.
 	UseRawPath bool
-
+    
+	// UnescapePathValues 如果为true，则路径值将被解码。
+	// 如果UseRawPath为false（默认情况下），则UnescapePathValues实际上为true，因为将使用url.Path，该路径已解码。
+	
 	// UnescapePathValues if true, the path value will be unescaped.
 	// If UseRawPath is false (by default), the UnescapePathValues effectively is true,
 	// as url.Path gonna be used, which is already unescaped.
 	UnescapePathValues bool
+    
+	// RemoveExtraSlash 如果启用，即使有额外的斜杠，也可以从URL中解析参数。
+	// 请参见PR＃1817和问题＃1644
 
 	// RemoveExtraSlash a parameter can be parsed from the URL even with extra slashes.
 	// See the PR #1817 and issue #1644
 	RemoveExtraSlash bool
+
+    // RemoteIPHeaders 用于在`(*gin.Engine).ForwardedByClientIP`为true时获取客户端IP的标头列表，
+	// 并且`(*gin.Context).Request.RemoteAddr`至少与列表中的一个网络原点匹配。
+	// 由`(*gin.Engine).SetTrustedProxies()`定义的列表的网络原点。
 
 	// RemoteIPHeaders list of headers used to obtain the client IP when
 	// `(*gin.Engine).ForwardedByClientIP` is `true` and
@@ -145,14 +173,18 @@ type Engine struct {
 	// network origins of list defined by `(*gin.Engine).SetTrustedProxies()`.
 	RemoteIPHeaders []string
 
+	// TrustedPlatform 如果设置为值为gin.Platform*的常量，则信任该平台设置的标头，例如确定客户端IP
 	// TrustedPlatform if set to a constant of value gin.Platform*, trusts the headers set by
 	// that platform, for example to determine the client IP
 	TrustedPlatform string
-
+    
+    // MaxMultipartMemory 'maxMemory'参数的MaxMultipartMemory值，该参数提供给http.Request的ParseMultipartForm方法调用。
 	// MaxMultipartMemory value of 'maxMemory' param that is given to http.Request's ParseMultipartForm
 	// method call.
 	MaxMultipartMemory int64
-
+    
+	// UseH2C 启用h2c支持。
+	// HTTP/2协议定义了两个版本，分别是h2和h2c。h2是基于TLS的，而h2c是基于TCP的,没有tls加密。
 	// UseH2C enable h2c support.
 	UseH2C bool
 
