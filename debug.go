@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"strings"
 )
-
+// ginSupportMinGoVer 是gin支持的最小go版本
 const ginSupportMinGoVer = 18
 
 // IsDebugging returns true if the framework is running in debug mode.
