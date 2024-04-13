@@ -29,7 +29,9 @@ var (
 )
 
 var defaultPlatform string
-
+// IPNet表示一个IP地址和它的网络掩码
+// 网络掩码（子网掩码）用于划分网络地址和主机地址。通过将IP地址和子网掩码进行逻辑与运算，可以得到网络地址，从而标识不同的网络
+// 举个例子，假设有一个IP地址为192.168.1.100，子网掩码为255.255.255.0。将IP地址和子网掩码进行按位与运算，得到的结果就是网络地址，即192.168.1.0。这个网络地址标识了一个特定的网络，而IP地址192.168.1.100则属于这个网络中的一个主机。当数据要传输到IP地址为192.168.1.100的主机时，路由器会根据子网掩码来判断目的IP地址属于哪个网络，从而选择正确的转发路径，确保数据能够准确到达目标网络。
 var defaultTrustedCIDRs = []*net.IPNet{
 	{ // 0.0.0.0/0 (IPv4)
 		IP:   net.IP{0x0, 0x0, 0x0, 0x0},
@@ -42,6 +44,7 @@ var defaultTrustedCIDRs = []*net.IPNet{
 }
 
 var regSafePrefix = regexp.MustCompile("[^a-zA-Z0-9/-]+")
+//表示必须连续出现两次/或以上的字符
 var regRemoveRepeatedChar = regexp.MustCompile("/{2,}")
 
 // HandlerFunc defines the handler used by gin middleware as return value.
@@ -169,6 +172,7 @@ type Engine struct {
 	// 并且`(*gin.Context).Request.RemoteAddr`至少与列表中的一个网络原点匹配。
 	// 由`(*gin.Engine).SetTrustedProxies()`定义的列表的网络原点。
 
+	// 如果通过nginx等代理服务器访问，nginx配置文件中会添加自定义的header,例如：X-Forwarded-For
 	// RemoteIPHeaders list of headers used to obtain the client IP when
 	// `(*gin.Engine).ForwardedByClientIP` is `true` and
 	// `(*gin.Context).Request.RemoteAddr` is matched by at least one of the
@@ -189,7 +193,8 @@ type Engine struct {
 	// HTTP/2协议定义了两个版本，分别是h2和h2c。h2是基于TLS的，而h2c是基于TCP的,没有tls加密。
 	// UseH2C enable h2c support.
 	UseH2C bool
-
+    
+	// ContextWithFallback 当Context.Request.Context()不为nil时，启用回退Context.Deadline()、Context.Done()、Context.Err()和Context.Value()。
 	// ContextWithFallback enable fallback Context.Deadline(), Context.Done(), Context.Err() and Context.Value() when Context.Request.Context() is not nil.
 	ContextWithFallback bool
 
@@ -208,7 +213,7 @@ type Engine struct {
 	trustedProxies   []string
 	trustedCIDRs     []*net.IPNet
 }
-
+// 检查是否实现了IRouter接口
 var _ IRouter = (*Engine)(nil)
 
 // New returns a new blank Engine instance without any middleware attached.
@@ -227,6 +232,7 @@ func New(opts ...OptionFunc) *Engine {
 			basePath: "/",
 			root:     true,
 		},
+		// html/template 相关函数
 		FuncMap:                template.FuncMap{},
 		RedirectTrailingSlash:  true,
 		RedirectFixedPath:      false,
